@@ -1,4 +1,4 @@
-# docker for intra-mart with Oracle Database
+# docker for intra-mart with Oracle
 
 - intra-mart の検証環境を Docker コンテナ上に作成し、環境構築にかかる時間を削減
 
@@ -16,49 +16,44 @@ $ git clone https://github.com/rinne-grid/docker-for-intra-mart-with-oracle im -
 | v1.0-oracle12c-openjdk8          | centos:7.5.1804(※1) | Oracle Database 12.2.0 | OpenJDK8        | 4.0.56 より前のバージョンで確認 | iAP 2019 Summer で確認(※1) |
 | v2.0-oracle19c-openjdk11-rhel8.x | RHEL8.x             | Oracle Database 19.3.0 | OpenJDK11       | 4.0.66 で確認                   | iAP 2022 Spring で確認     |
 
+（※1 iAP2019Summer のサーバ要件は、RHEL6.x, RHEL7.x が前提となります。）
+
 ## Docker で作成する intra-mart のシステム構成
 
 ### Docker 上の環境
 
-| ホスト名 | コンテナイメージ                         | 目的                              |
-| -------- | ---------------------------------------- | --------------------------------- |
-| ap       | CentOS 7.5.1804(※1）(library/centos)     | resin-pro の実行及び war デプロイ |
-| db       | Oracle Database 12.2.0.1.0(ビルドで作成) | intra-mart に関するデータの保存   |
+| ホスト名 | コンテナイメージ                     | 目的                              |
+| -------- | ------------------------------------ | --------------------------------- |
+| ap       | Red Hat Enterprise Linux 8.x (Ootpa) | resin-pro の実行及び war デプロイ |
+| db       | Oracle Database 19.3.0(ビルドで作成) | intra-mart に関するデータの保存   |
 
-（※1 厳密には、NTT データイントラマート社は intra-mart が動作する Linux 環境として、Red Hat Enterprise Linux 6.x、7.x のみを動作保証しているため、
-本 Docker 関連ファイルを利用する場合は、あくまでも動作検証用の環境に留めておくことをおすすめします。本記事の内容によって発生した障害等について、一切責任を負いません）
+（本 Docker 関連ファイルを利用する場合は、あくまでも動作検証用の環境に留めておくことをおすすめします。本内容によって発生した障害等について、一切責任を負いません）
 
 ## 事象別のコマンドリファレンス
 
 | 事象                                                                                                                                    | コマンド                                                                     |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Docker コンテナを開始したい                                                                                                             | docker-compose up                                                            |
-| Docker コンテナをビルドしたい                                                                                                           | docker-compose build --no-cache                                              |
-| Docker コンテナを終了させたい                                                                                                           | docker-compose down                                                          |
-| DB データやストレージを削除して、<br>新しくテナント環境セットアップから始めたい（永続化しているコンテナのデータが全部消えるので要注意） | docker-compose up <br>docker-compose down -v<br>docker-compose up            |
-| war ファイルをアンデプロイしたい                                                                                                        | docker-compose exec ap /ap-server/bin/resinctl undeploy imart                |
-| war ファイルをデプロイしたい                                                                                                            | docker-compose exec ap /ap-server/bin/resinctl deploy /war/imart.war         |
-| Oracle イメージを単独で作成したい場合                                                                                                   | docker build -t oracle12c_local:latest ./db/build --build-arg DB_EDITION=SE2 |
+| Docker コンテナを開始したい                                                                                                             | docker compose up                                                            |
+| Docker コンテナをビルドしたい                                                                                                           | docker compose build --no-cache                                              |
+| Docker コンテナを終了させたい                                                                                                           | docker compose down                                                          |
+| DB データやストレージを削除して、<br>新しくテナント環境セットアップから始めたい（永続化しているコンテナのデータが全部消えるので要注意） | docker compose up <br>docker compose down -v<br>docker compose up            |
+| war ファイルをアンデプロイしたい                                                                                                        | docker compose exec ap /ap-server/bin/resinctl undeploy imart                |
+| war ファイルをデプロイしたい                                                                                                            | docker compose exec ap /ap-server/bin/resinctl deploy /war/imart.war         |
+| Oracle イメージを単独で作成したい場合                                                                                                   | docker build -t oracle19c_local:latest ./db/build --build-arg DB_EDITION=SE2 |
 
 ## コンテナごとの接続情報
 
-- AP サーバー（CentOS）
+- AP サーバー（RHEL）
 
 | コンテナ名 | ホスト名 | ポート番号(ホスト) | ポート番号(コンテナ) |
 | ---------- | -------- | ------------------ | -------------------- |
-| im_ap_n    | ap       | 8888               | 8080                 |
+| im_ap_ora  | ap       | 8888               | 8080                 |
 
 - Oracle Database
 
 | コンテナ名 | ホスト名 | DB 名 | ユーザ名 | パスワード | ポート番号(ホスト) | ポート番号(コンテナ) |
 | ---------- | -------- | ----- | -------- | ---------- | ------------------ | -------------------- |
-| im_db_n    | db       | IMART | IMART    | IMART      | 15210              | 1521                 |
-
-- Adminer
-
-| コンテナ名 | ホスト名 | ポート番号(ホスト) | ポート番号(ゲスト) |
-| ---------- | -------- | ------------------ | ------------------ |
-| im_ap_n    | adminer  | 8889               | 8080               |
+| im_db_ora  | db       | IMART | IMART    | IMART      | 15210              | 1521                 |
 
 ## 利用手順
 
@@ -92,13 +87,13 @@ https://www.docker.com/products/docker-desktop/
 > mkdir .\ap\war
 ```
 
-### [4] Oracle Database 12.2.0.1.0 をダウンロードします
+### [4] Oracle Database 19.3 をダウンロードします
 
-- 下記の URL にアクセスし、(12.2.0.1.0) - Standard Edition 2 and Enterprise Edition を見つけ、Linux x86-64 をダウンロードします
+- 下記の URL にアクセスし、19.3 - Enterprise Edition (Standard Edition 2 を含む) を見つけ、Linux x86-64 をダウンロードします
 
-  https://www.oracle.com/technetwork/jp/database/enterprise-edition/downloads/index.html
+  https://www.oracle.com/jp/database/technologies/oracle-database-software-downloads.html
 
-- ダウンロードしたファイル(linuxx64-12201_database.zip)を im/db/build フォルダに配置します
+- ダウンロードしたファイル(LINUX.X64_193000_db_home.zip)を im/db/build フォルダに配置します
 
 ### [5] Juggling で war ファイルを作成
 
@@ -178,23 +173,22 @@ https://www.intra-mart.jp/download/product/iap/setup/iap_setup_guide/texts/insta
 - 上記の resin-pro.4.0.xx を展開し「resin-pro.4.0.xx」の名称を resin-pro に変更します
 - resin-pro フォルダを im/ap フォルダにコピーします
 
-### [8] JDBC ドライバー(ojdbc8.jar)をダウンロードし、im/ap/resin-pro/lib にコピー
+### [8] JDBC ドライバー(ojdbc10.jar)をダウンロードし、im/ap/resin-pro/lib にコピー
 
-- 下記の URL にアクセスし、ojdbc8.jar を見つけ、ダウンロードします
+- 下記の URL にアクセスし、ojdbc10.jar を見つけ、ダウンロードします
 
   https://www.oracle.com/technetwork/database/features/jdbc/jdbc-ucp-122-3110062.html
 
 - ojdbc8.jar を im/ap/resin-pro/lib にコピーします
 
-### [9] シェルスクリプトの改行コードの確認とプロジェクトのフォルダ構成の確認
+### [9] プロジェクトのフォルダ構成の確認
 
-- 【！】重要【！】db/build/scripts_setup/01_create_imart.sh の改行コードが LF になっていることを確認します
 - フォルダを確認し、以下の構成と同じになっていることを確認します
 - ポイント
   - im/ap/resin-pro フォルダがあり、直下に automake や lib フォルダ等が存在する
   - im/ap/resin-pro/lib フォルダ内に odbc8.jar ファイルが存在する
   - im/ap/war フォルダがあり、imart.war ファイルが存在する
-  - im/db/build フォルダ内に linuxx64_12201_database.zip が存在する
+  - im/db/build フォルダ内に LINUX.X64_193000_db_home.zip が存在する
 
 ```
 im
@@ -215,7 +209,7 @@ im
 │
 ├─db
 │  ├─build
-│  │  ├─linuxx64_12201_database.zip
+│  │  ├─LINUX.X64_193000_db_home.zip
 │  │  │
 │  │  ├─checkDBStatus.sh など
 │  │
@@ -226,7 +220,7 @@ im
 │
 ├─.env
 ├─.gitignore
-├─docker-compose.yml
+├─docker compose.yml
 └─README.md
 
 ```
@@ -258,10 +252,10 @@ HTTPS_PROXY=http://user:password@server:port/
 > cd any_folder\im
 ```
 
-- docker-compose を利用し、コンテナを起動します
+- docker compose を利用し、コンテナを起動します
 
 ```sh
-> $ docker-compose up -d ; docker-compose logs -f
+> $ docker compose up -d ; docker compose logs -f
 ```
 
 イメージ作成の際にアップデート等の処理が走るので、15 分程度～ 30 分程度かかります。
@@ -270,19 +264,29 @@ terminal にいろいろと出力されていきます。
 以下の表示が出たら終了と判断して良いと思います。Ctrl+C 等でを強制終了します。
 
 ```
-db_1       | #################
-db_1       | DATABASE IS READY TO USE!
-db_1       | #################
-db_1       | The following output is now a tail of the alert.log:
-db_1       | EXTENT MANAGEMENT LOCAL AUTOALLOCATE
-db_1       | SEGMENT SPACE MANAGEMENT AUTO
-db_1       | 2019-03-07T14:11:29.343682+00:00
-db_1       | RNGD(3):Completed: CREATE TABLESPACE IMART
-db_1       | DATAFILE '/opt/oracle/oradata/ORCL/XXXX/IMART.dbf' SIZE 7000M REUSE
-db_1       | LOGGING
-db_1       | ONLINE
-db_1       | BLOCKSIZE 8K
-db_1       | EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+db1 | DONE: Executing user defined scripts
+db1 |
+db1 | The Oracle base remains unchanged with value /opt/oracle
+db1 | #################
+db1 | DATABASE IS READY TO USE!
+db1 | #################
+db1 |
+db1 | Executing user defined scripts
+db1 | /opt/oracle/runUserScripts.sh: ignoring /opt/oracle/scripts/startup/*
+db1 |
+db1 | DONE: Executing user defined scripts
+db1 |
+db1 | The following output is now a tail of the alert.log:
+db1 | EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+db1 | SEGMENT SPACE MANAGEMENT AUTO
+db1 | 2023-03-25T12:07:49.996452+00:00
+db1 | RNGD(3):Completed: CREATE TABLESPACE IMART
+db1 | DATAFILE '/opt/oracle/oradata/ORCL/RNGD/IMART.dbf' SIZE 7000M REUSE
+db1 | LOGGING
+db1 | ONLINE
+db1 | BLOCKSIZE 8K
+db1 | EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+db1 | SEGMENT SPACE MANAGEMENT AUTO
 ```
 
 ホストマシン側から Oracle Database に接続したい場合は下記の指定を行います。
@@ -293,18 +297,14 @@ db_1       | EXTENT MANAGEMENT LOCAL AUTOALLOCATE
 | --------- | ---------- | -------------------- |
 | IMART     | IMART      | localhost:15210/RNGD |
 
-（Docker for Windows や Docker for Mac の場合は、上記 IP アドレスではなく localhost:15210 もしくは自分で設定しているホスト名や IP アドレスを指定します。）
-
 - resin の index ページに接続します
 
 http://localhost:8888
 
-![docker-toolbelt](http://www.rinsymbol.sakura.ne.jp/github_images/docker/resin-top.PNG)
-
 - resin のページが開けることが確認できたら、war ファイルをデプロイします
 
 ```sh
-> docker-compose exec ap /ap-server/bin/resinctl deploy /war/imart.war
+> docker compose exec ap /ap-server/bin/resinctl deploy /war/imart.war
 ```
 
 コンテナ内の resin-pro の場所は、/ap-server です。
@@ -334,11 +334,11 @@ http://localhost:8888/imart/system/login
 - テナント環境セットアップが適切に動作しているかについて、ログを確認したい場合以下のコマンドを実行します
 
 ```
-$ docker-compose exec ap bash
+$ docker compose exec ap bash
 $ less -f ./log/jvm-app-0.log
 ```
 
 - データベースやストレージ情報は Docker Volume に保存しているため、データは永続化されています
-  - 一度、docker-compose down で終了し、もう一度 docker-compose up を試して、システムログイン画面にアクセスすると、ダッシュボードが表示されることがわかります
+  - 一度、docker compose down で終了し、もう一度 docker compose up を試して、システムログイン画面にアクセスすると、ダッシュボードが表示されることがわかります
 
 ![dashboard](http://www.rinsymbol.sakura.ne.jp/github_images/docker/dashboard.PNG)

@@ -1,6 +1,15 @@
-version: '3.6'
+volumes:
+  resin-data:
+    driver: local
+  im-storage:
+    driver: local
+  oracle-db:
+    driver: local
+networks:
+  imart-network:
 services:
   ap:
+    container_name: im_ap_ora
     build: 
       context: ./ap
       args:
@@ -13,6 +22,7 @@ services:
         arg_jdbc_file_name    : ${JDBC_FILE_NAME}
         arg_jdbc_download_url : ${JDBC_DOWNLOAD_URL}
         arg_resin_home        : ${RESIN_HOME}
+        arg_container_jdk     : ${CONTAINER_JDK}
     deploy:
       resources:
         limits:
@@ -34,10 +44,14 @@ services:
       - JDBC_FILE_NAME
       - JDBC_DOWNLOAD_URL
       - RESIN_HOME
+      - CONTAINER_JDK
     depends_on:
       - "db"
+    networks:
+      - imart-network
   db:
-    image: oracle12c_local:latest
+    container_name: im_db_ora
+    image: oracle19c_local:latest
     build:
       context: ./db/build
       args:
@@ -65,15 +79,5 @@ services:
     ports:
       - "${TNS_LISTENER_PORT}:1521"
       - "${EM_EXPRESS_PORT}:5500"
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - ${DBADM_HOST_PORT}:${DBADM_GUEST_PORT}
-volumes:
-  resin-data:
-    driver: local
-  im-storage:
-    driver: local
-  oracle-db:
-    driver: local
+    networks:
+      - imart-network
